@@ -2,7 +2,7 @@
 
 ### 0x0 前置补偿
 
-[有关ret2dl_resolve的学习笔记]([https://github.com/Meng-YC/markdown/blob/master/ret2dl_resolve%E7%AC%94%E8%AE%B0/ret2dl_resolve%20%E5%AD%A6%E4%B9%A0.md](https://github.com/Meng-YC/markdown/blob/master/ret2dl_resolve笔记/ret2dl_resolve 学习.md))
+[有关ret2dl_resolve的学习笔记](https://github.com/Meng-YC/markdown/blob/master/ret2dl_resolve%E7%AC%94%E8%AE%B0/ret2dl_resolve%20%E5%AD%A6%E4%B9%A0.md](https://github.com/Meng-YC/markdown/blob/master/ret2dl_resolve笔记/ret2dl_resolve 学习.md))
 
 [TLS CANARY](https://wiki.x10sec.org/pwn/mitigation/Canary/#1canary)
 
