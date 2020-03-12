@@ -1,10 +1,3 @@
----
-title: Computer-Networking-Chapter-6
-date: 2019-11-26 19:59:58
-tags: Computer_Networking
-mathjax: true
----
-
 # Chapter 6
 
 #### R1

@@ -1,11 +1,3 @@
----
-title: Computer-Networking-Chapter-1
-date: 2019-11-17 22:58:20
-tags: Computer_Networking
-mathjax: true
-
----
-
 # Chapter 1
 
 因为复习计算机网络，记录一下每一章的复习题答案。

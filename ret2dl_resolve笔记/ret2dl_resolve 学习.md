@@ -1,3 +1,5 @@
+
+
 # ret2dl_resolve 学习
 
 新春战“疫”有一道题BFnote，看到有位大佬的wp用到了`ret2dl_resolve`，就赶紧学一学。
@@ -222,9 +224,9 @@ _dl_fixup (
 
 总结一下：
 
-- 用`link_map`访问`.dynamic`，取出`.dynstr`, `.dynsym`, `.rel.plt`的指针。
+1. 用`link_map`访问`.dynamic`，取出`.dynstr`, `.dynsym`, `.rel.plt`的指针。
 
-- 利用 `.rel.plt` 头部指针和传入的第二个参数 offset 定位` .rel.plt` 中的 `Elf32_Rel` 结构体，计作`reloc`，
+2. 利用 `.rel.plt` 头部指针+传入的第二个参数 offset 定位` .rel.plt` 中的 `Elf32_Rel` 结构体，计作`reloc`，
 
   ```c
   //Elf32_Rel结构体
@@ -265,7 +267,7 @@ _dl_fixup (
 
   
 
-- `reloc->r_info (==0x207)  >> 8 (== 2) `作为`.dynsym`的下标，求出当前函数的符号表项`Elf32_Sym`的指针，记作`sym`，检查`reloc->r_info`的最低位是否为`0x7`, 不是则退出。
+3. `reloc->r_info (==0x207)  >> 8 (== 2) `作为`.dynsym`的下标，求出当前函数的符号表项`Elf32_Sym`的指针，记作`sym`，检查`reloc->r_info`的最低位是否为`0x7`, 不是则退出。
 
   ```c
   /* Symbol table entry.  */
@@ -306,7 +308,7 @@ _dl_fixup (
        9: 0804a040     4 OBJECT  GLOBAL DEFAULT   26 stdin@GLIBC_2.0 (2)
   ```
 
-- 接着通过`strtab(.dynstr)+sym->st_name`找到符号表字符串指针。
+4. 接着通过`strtab(.dynstr)+sym->st_name`找到符号表字符串指针。
 
   `Elf32_Sym[2]->st_name=0x27`（`.dynsym + Elf32_Sym_size * num`），所以`.dynstr`加上`0x27`的偏移量，就是字符串`read`的指针。`result`为`libc`的基地址。
 
@@ -332,7 +334,7 @@ _dl_fixup (
   LOAD:08048318 ; ELF REL Relocation Table
   ```
 
-- 然后在动态链接库中解析这个函数的地址，放入GOT表。
+5. 然后在动态链接库中解析这个函数的地址，放入GOT表。
 
 最后完成调用函数。
 
@@ -373,12 +375,16 @@ _dl_fixup (
 
 
 1. 控制`eip`为`PLT[0]`的地址，只需传递一个`index_arg`参数
-2. 控制`index_arg`的大小，使`reloc (Elf32_Rel)`的位置落在可控地址（比如`.bss`段）内
-3. 伪造`reloc (Elf_Rel)`的内容，使`sym (Elf_Sym)`落在可控地址（比如`.bss`段）内
-4. 伪造`sym (Elf_Sym)`的内容，使`st_name`落在可控地址（比如`.bss`段）内
+2. 控制`index_arg`的大小，使指向的`reloc (Elf32_Rel)`的位置落在可控地址（比如`.bss`段）内
+3. 伪造`reloc (Elf_Rel)`的`r_info`，使指向的`sym (Elf_Sym)`落在可控地址（比如`.bss`段）内
+4. 伪造`sym (Elf_Sym)`的内容，使`sym->st_name`的偏移落在可控地址（比如`.bss`段）内
 5. 伪造`Elf_Sym->st_name`为任意库函数，比如说`system`
 
 **每一种情况的演示，在[这篇文章](https://qianfei11.github.io/2019/08/06/A-trip-of-ret2dl-resolve/#Pwned-One-by-One)里有详细清晰说明。**
+
+### 0x3 64位ret2dl_resolve
+
+有时间再写吧，先贴一个[链接](http://rk700.github.io/2015/08/09/return-to-dl-resolve/)
 
 ### 0x3 reference
 

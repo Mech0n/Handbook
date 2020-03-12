@@ -1,10 +1,3 @@
----
-title: tcache 学习
-date: 2020-03-03 17:24:45
-tags:
-- pwn
----
-
 # tcache 学习笔记
 
 记录一下glib-2.26之后的tcache机制，笔记可能会杂乱无章。

@@ -1,11 +1,3 @@
----
-title: jarvis_level6x86
-date: 2020-02-27 14:27:29
-tags:
-- pwn
-- jarvisOJ
----
-
 # jarvisOJ level6 x86
 
 ### 0x0 前置补偿
