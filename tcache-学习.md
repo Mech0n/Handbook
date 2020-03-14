@@ -10,6 +10,7 @@
 typedef struct tcache_entry
 {
   struct tcache_entry *next;
+  //libc2.29有添加别的
 } tcache_entry;
 
 

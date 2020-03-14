@@ -4,7 +4,7 @@
 
 看一下安全性：
 
-```yaml
+```shell
 Arch: amd64-64-little
 RELRO: Partial RELRO
 Stack: No canary found
@@ -104,8 +104,3 @@ p.sendafter("Done!You can check and use your borrow stack now!\n", payload)
 
 p.interactive()
 ```
-
-
-
-
-
