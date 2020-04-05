@@ -10,7 +10,6 @@
 typedef struct tcache_entry
 {
   struct tcache_entry *next;
-  //libc2.29有添加别的
 } tcache_entry;
 
 
@@ -80,7 +79,7 @@ tcache_get (size_t tc_idx)
 
 另外，`tcache_pthread_struct`链表结点结构体很简单，就是一个`next`指针指向链表中下一个堆块（的用户数据区）；然后定义了一个线程的完整tcache结构体，由两部分组成，第一部分是计数表，记录了$64$个tcache链表中每个链表内已有的堆块个数$(0-7)$，第二部分是入口表，用来记录$64$个tcache链表中每条链表的入口地址（即链表中第一个堆块的用户区地址）；最后一行则是初始化了一个线程的tcache，存储在堆空间起始处的tcache在这一步后就完成了分配，由于tcache本身也在堆区故也是一个大chunk，因此其大小是`size_chunkhead + size_counts + size_entries = 16 + 64 + 64*8 = 592 = 0x250​`
 
-因此在libc2.26及以后的版本中，堆空间起始部分都会有一块先于用户申请分配的堆空间，大小为`0x250`，这就是tcache`（0x000-0x24F）`，也就是说用户申请第一块堆内存的起始地址的最低位字节是`0x50`。
+因此在libc2.26及以后的版本中，**堆空间起始部分**都会有一块先于用户申请分配的堆空间，大小为`0x250`，这就是tcache`（0x000-0x24F）`，也就是说用户申请第一块堆内存的起始地址的最低位字节是`0x50`。
 
 2.29之后又加入了些许改变：修改了对double free的检查：
 
@@ -148,7 +147,7 @@ index 6d7a6a8..f730d7a 100644 (file)
 
 在这里还给`tcache_entry`添加了一个变量`key`,在bk指针的位置。
 
-### 0x20 _int_malloc部分的改变
+### 0x20 _int_malloc部分
 
 在内存分配的 malloc 函数中有多处，会将内存块移入 tcache 中。
 
