@@ -4,7 +4,7 @@
 
 待整理。
 
-#### 【2020-04-05 -> 2020-04-11】
+#### 【2020-04-05 -> 2020-04-12】
 
 | 题目                                                         | 补偿                                                  |
 | ------------------------------------------------------------ | ----------------------------------------------------- |
@@ -13,4 +13,7 @@
 | [hacknote](./pwnable.tw-hacknote.md)                         | Linux ;分割连续命令｜Fastbin                          |
 | [calc](./Pwnable.tw-calc.md)                                 | scanf("%d")中`+`算是合法输入导致输入空内容            |
 | [Dubblesort](./pwnable.tw-dubblesort/pwnable.tw-dubblesort.md) | CANARY绕过｜`_GLOBAL_OFFSET_TABLE_`地址即`'.got.plt'` |
+| [easy_stack](./eonew-easy_stack/eonew-easy_stack.md)         | read()函数与`\x00`｜`__libc_start_main`               |
+
+#### 【2020-04-13-2020-04-19】
 
