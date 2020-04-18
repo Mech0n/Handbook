@@ -19,7 +19,7 @@
 | 题目                                                 | 补偿                                                         |
 | ---------------------------------------------------- | ------------------------------------------------------------ |
 | [easy_stack](./eonew-easy_stack/eonew-easy_stack.md) | `read()`函数与`\x00`｜`__libc_start_main`                    |
-| [no_leak](./eonew-no_leak/eonew-no_leak.md)          | `syscall`｜`ld.so` 地址部分写｜栈迁移｜[`ret2del_resolve`]([https://github.com/Mech0n/Handbook/blob/master/ret2dl_resolve%E7%AC%94%E8%AE%B0/ret2dl_resolve%20%E5%AD%A6%E4%B9%A0.md](https://github.com/Mech0n/Handbook/blob/master/ret2dl_resolve笔记/ret2dl_resolve 学习.md)) |
+| [no_leak](./eonew-no_leak/eonew-no_leak.md)          | `syscall`｜`ld.so` 地址部分写｜栈迁移｜[ret2del_resolve](https://github.com/Mech0n/Handbook/blob/master/ret2dl_resolve笔记/ret2dl_resolve 学习.md) |
 | Re-alloc                                             | `realloc()`函数与UAF                                         |
 | Tcache_Tear                                          | `House of spirit` | glibc2.27 下的`tcache`机制               |
 
