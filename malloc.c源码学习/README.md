@@ -10,3 +10,9 @@
 
 待补充ing
 
+##### Reference
+
+[Introspelliam](https://introspelliam.github.io/categories/pwn/)
+
+[Understanding glibc malloc](https://sploitfun.wordpress.com/2015/02/10/understanding-glibc-malloc/)
+
