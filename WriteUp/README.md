@@ -20,16 +20,16 @@
 | ---------------------------------------------------- | ---------------------------------------------------------- |
 | [easy_stack](./eonew-easy_stack/eonew-easy_stack.md) | `read()`函数与`\x00`｜`__libc_start_main`                  |
 | [no_leak](./eonew-no_leak/eonew-no_leak.md)          | `syscall`｜`ld.so` 地址部分写｜栈迁移｜`[ret2del_resolve]` |
-| [Re-alloc](./pwnable.tw Re-alloc.md)                 | `realloc()`函数与UAF                                       |
-| [Tcache_Tear](./pwnable.tw Tcache-tear.md)           | `House of spirit`                                          |
+| [Re-alloc](./pwnable.tw-Re-alloc.md)                 | `realloc()`函数与UAF                                       |
+| [Tcache_Tear](./pwnable.tw-Tcache-tear.md)           | `House of spirit`                                          |
 
 #### 【2020-04-19->2020-04-24】
 
 | 题目                                                         | 补偿                                                   |
 | ------------------------------------------------------------ | ------------------------------------------------------ |
-| [simpleHeap](./[V&N] simpleHeap.md)                          | `Fastbin dup`｜`__malloc_hook`和`__realloc_hook`的配合 |
-| [Alive note && Death Note](./pwnable.tw Alive note && Death Note.md) | Shellcode 编写                                         |
-| [seethefile](./pwnable.tw seethefile.md)                     | `/proc/self/map`｜`IO_FILE`                            |
+| [simpleHeap](./[V&N]simpleHeap.md)                           | `Fastbin dup`｜`__malloc_hook`和`__realloc_hook`的配合 |
+| [Alive note && Death Note](./pwnable.tw-Alive_note&&Death_Note.md) | Shellcode 编写                                         |
+| [seethefile](./pwnable.tw-seethefile.md)                     | `/proc/self/map`｜`IO_FILE`                            |
 | [HFCTF-MarksMan](./HCTF/MarksMan/HCTF-MarksMan.md)           | 改写`libc.so.6`的GOT                                   |
 | 铁三2019-littlenot                                           | `Fastbin attack`                                       |
 | eonew-shellcode                                              | Ex大佬的`shellcode`题目（太难，待研究）                |
