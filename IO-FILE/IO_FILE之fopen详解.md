@@ -1,12 +1,4 @@
----
-layout: post
-title:  "IO FILE之fopen详解"
-date:   2019-05-10 17:32:00
-categories: ctf
-permalink: /archivers/IO_FILE_fopen_analysis
----
-
-**欢迎关注公众号[平凡路上](https://mp.weixin.qq.com/s/TR-JuE2nl3W7ZmufAfpBZA)，平凡路上是一个致力于二进制漏洞分析与利用经验交流的公众号。**
+> **欢迎关注公众号[平凡路上](https://mp.weixin.qq.com/s/TR-JuE2nl3W7ZmufAfpBZA)，平凡路上是一个致力于二进制漏洞分析与利用经验交流的公众号。**
 
 ## 前言
 
@@ -246,6 +238,6 @@ libc_hidden_def (_IO_file_open)
 4. `_IO_file_fopen`执行系统调用打开文件。
 
 整个流程还是比较简单的，fopen返回之后`_IO_list_all`链表指向返回的FILE结构体，且FILE结构体的_chain字段指向之前的结构体（没有其他额外打开文件的话，将是指向`stderr`），同时其他的字段大多都是默认的null值，`vtable`存储的是`__GI__IO_file_jumps`函数表，截图如下。
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/IO_FILE_fopen_analysis/./1557314446379.png)
+![Alt text](./1557314446379.png)
 
 文章先发于[安全客](https://www.anquanke.com/post/id/177910)

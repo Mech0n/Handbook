@@ -1,0 +1,5 @@
+- pwntools
+- vim
+- zsh
+- Python3
+- 

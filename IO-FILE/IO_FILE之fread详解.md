@@ -1,21 +1,14 @@
----
-layout: post
-title:  "IO FILE之fread详解"
-date:   2019-05-14 15:15:00
-categories: ctf
-permalink: /archivers/IO_FILE_fread_analysis
----
+> **欢迎关注公众号[平凡路上](https://mp.weixin.qq.com/s/TR-JuE2nl3W7ZmufAfpBZA)，平凡路上是一个致力于二进制漏洞分析与利用经验交流的公众号。**
 
-**欢迎关注公众号[平凡路上](https://mp.weixin.qq.com/s/TR-JuE2nl3W7ZmufAfpBZA)，平凡路上是一个致力于二进制漏洞分析与利用经验交流的公众号。**
-
-这是IO FILE系列的第二篇文章，主要写的是对于fread函数的源码分析，描述fread读取文件流的主要流程以及函数对IO FILE结构体以及结构体中的vtable的操作。流程有点小复杂，入坑需谨慎。
+这是IO FILE系列的第二篇文章，主要写的是对于`fread`函数的源码分析，描述`fread`读取文件流的主要流程以及函数对IO FILE结构体以及结构体中的`vtable`的操作。流程有点小复杂，入坑需谨慎。
 
 ## 总体流程
 第一篇文章[fopen](https://ray-cp.github.io/archivers/IO_FILE_fopen_analysis)的分析，讲述了系统如何为FILE结构体分配内存并将其链接进入`_IO_list_all`的。
 
-这篇文章则是说在创建了文件FILE以后，fread如何实现从文件中读取数据的。在开始源码分析之前，我先把fread的流程图给贴出来，后面在分析源码的时候，可以适时的参考下流程图，增进理解：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/IO_FILE_fread_analysis/1557385923980.png)
-从图中可以看到，整体流程为`fread`调用`_IO_sgetn`，`_IO_sgetn`调用vtable中的`_IO_XSGETN`也就是`_IO_file_xsgetn`，`_IO_file_xsgetn`是`fread`实现的核心函数。它的流程简单总结为：
+这篇文章则是说在创建了文件FILE以后，`fread`如何实现从文件中读取数据的。在开始源码分析之前，我先把fread的流程图给贴出来，后面在分析源码的时候，可以适时的参考下流程图，增进理解：
+![Alt text](./1557385923980.png)
+从图中可以看到，整体流程为`fread`调用`_IO_sgetn`，`_IO_sgetn`调用`vtable`中的`_IO_XSGETN`也就是`_IO_file_xsgetn`，`_IO_file_xsgetn`是`fread`实现的核心函数。它的流程简单总结为：
+
 1. 判断`fp->_IO_buf_base`输入缓冲区是否为空，如果为空则调用的`_IO_doallocbuf`去初始化输入缓冲区。
 2. 在分配完输入缓冲区或输入缓冲区不为空的情况下，判断输入缓冲区是否存在数据。
 3. 如果输入缓冲区有数据则直接拷贝至用户缓冲区，如果没有或不够则调用`__underflow`函数执行系统调用读取数据到输入缓冲区，再拷贝到用户缓冲区。
@@ -43,15 +36,14 @@ int main(){
 ```
 要让程序可以运行，执行命令`echo 111111>test`，然后gdb加载程序，断点下在fread，开始一边看源码，一边动态跟踪流程。
 
-
-程序运行起来后，可以看到断在`_IO_fread`函数。在开始之前我们先看下FILE结构体fp的内容，从图里可以看到此时的`_IO_read_ptr`和`_IO_buf_base`等指针都还是空的，后面的分析一个很重要的步骤也是看这些指针是如何被赋值以及发挥作用的：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/IO_FILE_fread_analysis/1557366110443.png)
+程序运行起来后，可以看到断在`_IO_fread`函数。在开始之前我们先看下FILE结构体`fp`的内容，从图里可以看到此时的`_IO_read_ptr`和`_IO_buf_base`等指针都还是空的，后面的分析一个很重要的步骤也是看这些指针是如何被赋值以及发挥作用的：
+![Alt text](./1557366110443.png)
 
 vtable中的指针内容如下：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/IO_FILE_fread_analysis/1557391989596.png)
+![Alt text](./1557391989596.png)
 
+`fread`实际上是`_IO_fread`函数，文件目录为`/libio/iofread.c`：
 
-fread实际上是`_IO_fread`函数，文件目录为`/libio/iofread.c`：
 ```c
 _IO_size_t
 _IO_fread (void *buf, _IO_size_t size, _IO_size_t count, _IO_FILE *fp)
@@ -80,7 +72,7 @@ libc_hidden_def (_IO_sgetn)
 ```c
 #define _IO_XSGETN(FP, DATA, N) JUMP2 (__xsgetn, FP, DATA, N)
 ```
-实际上就是FILE结构体中vtable的`__xsgetn`函数，跟进去`/libio/fileops.c`：
+实际上就是FILE结构体中`vtable`的`__xsgetn`函数，跟进去`/libio/fileops.c`：
 ```c
 _IO_size_t
 _IO_file_xsgetn (_IO_FILE *fp, void *data, _IO_size_t n)
@@ -102,7 +94,8 @@ _IO_file_xsgetn (_IO_FILE *fp, void *data, _IO_size_t n)
     {
     
       have = fp->_IO_read_end - fp->_IO_read_ptr;
-      if (want <= have)   ## 第二部分，输入缓冲区里已经有足够的字符，则直接把缓冲区里的字符给目标buff
+    ## 第二部分，输入缓冲区里已经有足够的字符，则直接把缓冲区里的字符给目标buf  
+    	if (want <= have)   
   {
     memcpy (s, fp->_IO_read_ptr, want);
     fp->_IO_read_ptr += want;
@@ -110,7 +103,8 @@ _IO_file_xsgetn (_IO_FILE *fp, void *data, _IO_size_t n)
   }
       else
   {
-    if (have > 0)  ## 第二部分，输入缓冲区里有部分字符，但是没有达到fread的size需求，先把已有的拷贝至目标buff
+        ## 第二部分，输入缓冲区里有部分字符，但是没有达到fread的size需求，先把已有的拷贝至目标buf
+    if (have > 0)  
       {
       ...
         memcpy (s, fp->_IO_read_ptr, have);
@@ -124,7 +118,8 @@ _IO_file_xsgetn (_IO_FILE *fp, void *data, _IO_size_t n)
     if (fp->_IO_buf_base
         && want < (size_t) (fp->_IO_buf_end - fp->_IO_buf_base))
       {
-        if (__underflow (fp) == EOF)  ## 第三部分，输入缓冲区里不能满足需求，调用__underflow读入数据
+      ## 第三部分，输入缓冲区里不能满足需求，调用__underflow读入数据
+        if (__underflow (fp) == EOF)  
     break;
 
         continue;
@@ -158,7 +153,7 @@ _IO_doallocbuf (_IO_FILE *fp)
 }
 libc_hidden_def (_IO_doallocbuf)
 ```
-函数先检查`fp->_IO_buf_base`是否为空，如果不为空的话表明该输入缓冲区已被初始化，直接返回。如果为空，则检查`fp->_flags`看它是不是`_IO_UNBUFFERED`或者`fp->_mode`大于0，如果满足条件调用FILE的vtable中的`_IO_file_doallocate`，跟进去该函数，在`/libio/filedoalloc.c`中：
+函数先检查`fp->_IO_buf_base`是否为空，如果不为空的话表明该输入缓冲区已被初始化，直接返回。如果为空，则检查`fp->_flags`看它是不是`_IO_UNBUFFERED`或者`fp->_mode`大于0，如果满足条件调用FILE的`vtable`中的`_IO_file_doallocate`，跟进去该函数，在`/libio/filedoalloc.c`中：
 ```c
 _IO_file_doallocate (_IO_FILE *fp)
 {
@@ -169,7 +164,8 @@ _IO_file_doallocate (_IO_FILE *fp)
   ...
   size = _IO_BUFSIZ;
   ...
-  if (fp->_fileno >= 0 && __builtin_expect (_IO_SYSSTAT (fp, &st), 0) >= 0) # 调用`_IO_SYSSTAT`获取FILE信息
+  if (fp->_fileno >= 0 && __builtin_expect (_IO_SYSSTAT (fp, &st), 0) >= 0) 
+    # 调用`_IO_SYSSTAT`获取FILE信息
    {
      ... 
      if (st.st_blksize > 0)
@@ -178,29 +174,33 @@ _IO_file_doallocate (_IO_FILE *fp)
    }
  p = malloc (size);
  ...
- _IO_setb (fp, p, p + size, 1); # 调用`_IO_setb`设置FILE缓冲区
+ _IO_setb (fp, p, p + size, 1); 
+  # 调用`_IO_setb`设置FILE缓冲区
   return 1;
 }
 libc_hidden_def (_IO_file_doallocate)
 ```
-可以看到`_IO_file_doallocate`函数是分配输入缓冲区的实现函数，首先调用`_IO_SYSSTAT`去获取文件信息，`_IO_SYSSTAT`函数是vtable中的` __stat`函数，获取文件信息，修改相应需要申请的size。可以看到在执行完`_IO_SYSSTAT`函数后，st结构体的值为：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/IO_FILE_fread_analysis/1557369066240.png)
-因此size被修改为`st.st_blksize`所对应的大小0x1000，接着调用malloc去申请内存，申请出来的堆块如下：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/IO_FILE_fread_analysis/1557369348191.png)
+可以看到`_IO_file_doallocate`函数是分配输入缓冲区的实现函数，首先调用`_IO_SYSSTAT`去获取文件信息，`_IO_SYSSTAT`函数是`vtable`中的` __stat`函数，获取文件信息，修改相应需要申请的`size`。可以看到在执行完`_IO_SYSSTAT`函数后，`st`结构体的值为：
+![Alt text](./1557369066240.png)
+因此`size`被修改为`st.st_blksize`所对应的大小0x1000，接着调用malloc去申请内存，申请出来的堆块如下：
+![Alt text](./1557369348191.png)
 空间申请出来后，调用`_IO_setb`，跟进去看它干了些啥，文件在`/libio/genops.c`中：
+
 ```c
 void
 _IO_setb (_IO_FILE *f, char *b, char *eb, int a)
 {
   ...
-  f->_IO_buf_base = b; # 设置_IO_buf_base 
-  f->_IO_buf_end = eb; # 设置_IO_buf_end
+	# 设置_IO_buf_base 
+  f->_IO_buf_base = b; 
+  # 设置_IO_buf_end
+  f->_IO_buf_end = eb; 
   ...
 }
 libc_hidden_def (_IO_setb)
 ```
 函数相对比较简单的就是设置了`_IO_buf_base`和`_IO_buf_end`，可以预料到`_IO_setb`函数执行完后，fp的这两个指针被赋上值了：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/IO_FILE_fread_analysis/1557370134122.png)
+![Alt text](./1557370134122.png)
 到此，初始化缓冲区就完成了，函数返回`_IO_file_doallocate`后，接着`_IO_file_doallocate`也返回，回到`_IO_file_xsgetn`函数中。
 
 ### 拷贝输入缓冲区数据
@@ -208,7 +208,7 @@ libc_hidden_def (_IO_setb)
 
 这部分比较简单，需要说明下的是从这里可以看出来`fp->_IO_read_ptr`指向的是输入缓冲区的起始地址，`fp->_IO_read_end`指向的是输入缓冲区的结束地址。
 
-将`fp->_IO_read_end-fp->_IO_read_ptr`之间的数据通过`memcpy`拷贝到目标缓冲区里。
+将`fp->_IO_read_end - fp->_IO_read_ptr`之间的数据通过`memcpy`拷贝到目标缓冲区里。
 
 ### 执行系统调用读取数据
 
@@ -232,7 +232,7 @@ libc_hidden_def (__underflow)
 ```
 函数稍微做一些检查就会调用`_IO_UNDERFLOW`函数，其中一个检查是如果`fp->_IO_read_ptr`小于`fp->_IO_read_end`则表明输入缓冲区里存在数据，可直接返回，否则则表示需要继续读入数据。
 
-检查都通过的话就会调用`_IO_UNDERFLOW`函数，该函数是FILE结构体vtable里的`_IO_new_file_underflow`，跟进去看，文件在`/libio/fileops.c`里：
+检查都通过的话就会调用`_IO_UNDERFLOW`函数，该函数是FILE结构体`vtable`里的`_IO_new_file_underflow`，跟进去看，文件在`/libio/fileops.c`里：
 ```c
 int
 _IO_new_file_underflow (_IO_FILE *fp)
@@ -275,14 +275,14 @@ libc_hidden_ver (_IO_new_file_underflow, _IO_file_underflow)
 ```
 这个`_IO_new_file_underflow`函数，是最终调用系统调用的地方，在最终执行系统调用之前，仍然有一些检查，整个流程为：
 1. 检查FILE结构体的`_flag`标志位是否包含`_IO_NO_READS`，如果存在这个标志位则直接返回`EOF`，其中`_IO_NO_READS`标志位的定义是`#define _IO_NO_READS 4 /* Reading not allowed */`。
-2. 如果`fp->_IO_buf_base`位null，则调用`_IO_doallocbuf`分配输入缓冲区。
+2. 如果`fp->_IO_buf_base`为`null`，则调用`_IO_doallocbuf`分配输入缓冲区。
 3. 接着初始化设置FILE结构体指针，将他们都设置成`fp->_IO_buf_base`
-4. 调用`_IO_SYSREAD`（vtable中的`_IO_file_read`函数），该函数最终执行系统调用read，读取文件数据，数据读入到`fp->_IO_buf_base`中，读入大小为输入缓冲区的大小`fp->_IO_buf_end - fp->_IO_buf_base`。
-5. 设置输入缓冲区已有数据的size，即设置`fp->_IO_read_end`为`fp->_IO_read_end += count`。
+4. 调用`_IO_SYSREAD`（`vtable`中的`_IO_file_read`函数），该函数最终执行系统调用`read`，读取文件数据，数据读入到`fp->_IO_buf_base`中，读入大小为输入缓冲区的大小`fp->_IO_buf_end - fp->_IO_buf_base`。
+5. 设置输入缓冲区已有数据的`size`，即设置`fp->_IO_read_end`为`fp->_IO_read_end += count`。
 
-其中第二步里面的如果`fp->_IO_buf_base`位null，则调用`_IO_doallocbuf`分配输入缓冲区，似乎有点累赘，因为之前已经分配了，这个原因我在最后会说明。
+其中第二步里面的如果`fp->_IO_buf_base`为`null`，则调用`_IO_doallocbuf`分配输入缓冲区，似乎有点累赘，因为之前已经分配了，这个原因我在最后会说明。
 
-其中第四步的`_IO_SYSREAD`（vtable中的`_IO_file_read`函数）的源码比较简单，就是执行系统调用函数read去读取文件数据，文件在`libio/fileops.c`，源码如下：
+其中第四步的`_IO_SYSREAD`（`vtable`中的`_IO_file_read`函数）的源码比较简单，就是执行系统调用函数read去读取文件数据，文件在`libio/fileops.c`，源码如下：
 ```c
 _IO_ssize_t
 _IO_file_read (_IO_FILE *fp, void *buf, _IO_ssize_t size)
@@ -293,7 +293,7 @@ _IO_file_read (_IO_FILE *fp, void *buf, _IO_ssize_t size)
  }
 ```
 `_IO_file_underflow`函数执行完毕以后，FILE结构体中各个指针已被赋值，且文件数据已读入，输入缓冲区里已经有数据，结构体值如下，其中`fp->_IO_read_ptr`指向输入缓冲区数据的开始位置，`fp->_IO_read_end`指向输入缓冲区数据结束的位置：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/IO_FILE_fread_analysis/1557374125426.png)
+![Alt text](./1557374125426.png)
 
 函数执行完后，返回到`_IO_file_xsgetn`函数中，由于`while`循环的存在，重新执行第二部分，此时将输入缓冲区拷贝至目标缓冲区，最终返回。
 
@@ -363,7 +363,7 @@ __libc_start_main
 * `__underflow`函数调用了vtable中的`_IO_new_file_underflow`实现文件数据读取。
 * vtable中的`_IO_new_file_underflow`调用了vtable`__GI__IO_file_read`最终去执行系统调用read。
 
-先提一下，后续如果想通过IO FILE实现任意读的话，最关键的函数应是`_IO_new_file_underflow`，它里面有个标志位的判断，是后面构造利用需要注意的一个比较重要条件：
+先提一下，后续如果想**通过IO FILE实现任意读**的话，最关键的函数应是`_IO_new_file_underflow`，它里面有个标志位的判断，是后面构造利用需要注意的一个比较重要条件：
 ```c
   ## 如果存在_IO_NO_READS标志，则直接返回
   if (fp->_flags & _IO_NO_READS)

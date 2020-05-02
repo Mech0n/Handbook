@@ -1,20 +1,12 @@
----
-layout: post
-title:  "IO FILE之fwrite详解"
-date:   2019-05-29 15:15:00
-categories: ctf
-permalink: /archivers/IO_FILE_fwrite_analysis
----
-
-**欢迎关注公众号[平凡路上](https://mp.weixin.qq.com/s/TR-JuE2nl3W7ZmufAfpBZA)，平凡路上是一个致力于二进制漏洞分析与利用经验交流的公众号。**
+> **欢迎关注公众号[平凡路上](https://mp.weixin.qq.com/s/TR-JuE2nl3W7ZmufAfpBZA)，平凡路上是一个致力于二进制漏洞分析与利用经验交流的公众号。**
 
 这是IO FILE系列的第三篇文章，主要讲述怎么通过IO向文件描述符进行输出，通过了前两篇的分析，这次对fwrite函数的分析快了不少，看源码调源码还是有点意思的。
 
 
 前两篇传送门：
 
-* [IO FILE之fopen详解](https://ray-cp.github.io/archivers/IO_FILE_fopen_analysis)
-* [IO FILE之fread详解](https://ray-cp.github.io/archivers/IO_FILE_fread_analysis)
+* [IO FILE之fopen详解](./IO_FILE之fopen详解.md)
+* [IO FILE之fread详解](./IO_FILE之fread详解.md)
 
 ## 总体概览
 
