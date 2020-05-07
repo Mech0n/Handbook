@@ -137,7 +137,7 @@ libc_hidden_ver (_IO_new_file_underflow, _IO_file_underflow)
 在之前的文章中，我们知道了当申请堆块大小很大时（0x200000），申请出来的堆块会紧挨着libc，因此我们可以利用这个溢出写`\x00`的漏洞往libc的内存中写入一个`\x00`字节。
 
 往哪里写一个`\x00`字节，后续改变整个内存结构而拿到shell？答案时`stdin`结构体中的`\x00`，我们先看下输入之前的stdin结构体中的数据：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-08-11-IO_FILE_arbitrary_read_write/1558426127981.png)
+![Alt text](1558426127981.png)
 ![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-08-11-IO_FILE_arbitrary_read_write/1558426295835.png)
 
 可以看到在glibc 2.24中，`stdin`结构体中存储`_IO_buf_end`指针内存地址的末尾刚好为`\x00`，若利用漏洞我们将`_IO_buf_base`末尾写`\x00`，则会使得`_IO_buf_base`指向`stdin`结构体中存储`_IO_buf_end`指针内存地址，即可利用输入缓冲区覆盖`_IO_buf_end`。
@@ -149,12 +149,13 @@ libc_hidden_ver (_IO_new_file_underflow, _IO_file_underflow)
 一是`IO_getc`函数的作用是刷新`_IO_read_ptr`，每次会从输入缓冲区读一个字节数据即将`_IO_read_ptr`加一，当`_IO_read_ptr`等于`_IO_read_end`的时候便会调用`read`读数据到`_IO_buf_base`地址中。
 
 二是往malloc_hook写什么，由于`one gadget`用不了，因此在栈中找到了一个gadget，地址为`0x400a23`，可以读取数据形成栈溢出，从而进行ROP，拿到shell。
-​```c
+
+```assembly
 .text:0000000000400A23                 lea     rax, [rbp+name]
 .text:0000000000400A27                 mov     esi, 50h        ; count
 .text:0000000000400A2C                 mov     rdi, rax        ; input
 .text:0000000000400A2F                 call    input_data
-​```
+```
 
 
 ## `stdout`标准输入缓冲区进行任意地址读写
@@ -189,30 +190,34 @@ _IO_new_file_xsputn (_IO_FILE *f, const void *data, _IO_size_t n)
 利用`stdout`进行任意地址读的原理为：控制输出缓冲区指针指向我们输入的地址，构造好条件，使得输出缓冲区为已经满的状态，再次调用输出函数时，程序会刷新输出缓冲区即会输出我们想要的数据，实现任意读。
 
 仍然是查看`fwrite`源码中如何才能实现该功能：
-​```c
+
+```c
 _IO_size_t
 _IO_new_file_xsputn (_IO_FILE *f, const void *data, _IO_size_t n)
 { 
 
-    _IO_size_t count = 0;
-...
-    ## 判断输出缓冲区还有多少空间
-    else if (f->_IO_write_end > f->_IO_write_ptr)
-    count = f->_IO_write_end - f->_IO_write_ptr; /* Space available. */
+_IO_size_t count = 0;
+  // 判断输出缓冲区还有多少空间
+else if (f->_IO_write_end > f->_IO_write_ptr)
+count = f->_IO_write_end - f->_IO_write_ptr; /* Space available. */
+  
+  //如果输出缓冲区有空间，则先把数据拷贝至输出缓冲区
 
-  ## 如果输出缓冲区有空间，则先把数据拷贝至输出缓冲区
   if (count > 0)
     {    
-    ...
+[...]
     //memcpy
     }
     if (to_do + must_flush > 0)
     {
       if (_IO_OVERFLOW (f, EOF) == EOF)
-​```
+[···]
+```
+
 当`f->_IO_write_end > f->_IO_write_ptr`时，会调用memcpy拷贝数据，因此最好构造条件`f->_IO_write_end`等于`f->_IO_write_ptr`。
 
 接着进入`_IO_OVERFLOW`函数，去刷新输出缓冲区，跟进去：
+
 ```c
 int
 _IO_new_file_overflow (_IO_FILE *f, int ch)

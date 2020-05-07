@@ -14,13 +14,13 @@
 
 首先要说明的是`fwrite`函数中涉及的几个IO FILE结构体里的指针：
 
-指针|描述|
+指针|描述
 ---|:--:
-_IO_buf_base| 输入输出缓冲区基地址
-_IO_buf_end| 输入输出缓冲区结束地址
-_IO_write_base|输出缓冲区基地址
-_IO_write_ptr|输出缓冲区已使用的地址
-_IO_write_end |输出缓冲区结束地址
+`_IO_buf_base`| 输入输出缓冲区基地址
+`_IO_buf_end`| 输入输出缓冲区结束地址
+`_IO_write_base`|输出缓冲区基地址
+`_IO_write_ptr`|输出缓冲区已使用的地址
+`_IO_write_end` |输出缓冲区结束地址
 
 其中`_IO_buf_base`和`_IO_buf_end`是缓冲区建立函数`_IO_doallocbuf`（上一篇详细描述过）会在里面建立输入输出缓冲区，并把基地址保存在`_IO_buf_base`中，结束地址保存在`_IO_buf_end`中。在建立里输入输出缓冲区后，如果缓冲区作为输出缓冲区使用，会将基址址给`_IO_write_base`，结束地址给`_IO_write_end`，同时`_IO_write_ptr`表示为已经使用的地址。即`_IO_write_base`到`_IO_write_ptr`之间的空间是已经使用的缓冲区，`_IO_write_ptr`到`_IO_write_end`之间为剩余的输出缓冲区。
 
@@ -32,7 +32,7 @@ _IO_write_end |输出缓冲区结束地址
 从图中可以看到`fwrite`的主要实现在`_IO_new_file_xsputn`中，整体流程包含四个部分：
 1. 首先判断输出缓冲区还有多少剩余，如果有剩余则将目标输出数据拷贝至输出缓冲区。
 2. 如果输出缓冲区没有剩余（输出缓冲区未建立也是没有剩余）或输出缓冲区不够则调用`_IO_OVERFLOW`建立输出缓冲区或刷新输出缓冲区。
-3. 输出缓冲区刷新后判断剩余的目标输出数据是否超过块的size，如果超过块的size，则不通过输出缓冲区直接以块为单位，使用`new_do_write`输出目标数据。
+3. 输出缓冲区刷新后判断剩余的目标输出数据是否超过块的`size`，如果超过块的`size`，则不通过输出缓冲区直接以块为单位，使用`new_do_write`输出目标数据。
 4. 如果按块输出数据后还剩下一点数据则调用`_IO_default_xsputn`将数据拷贝至输出缓冲区。
 
 下面进行源码分析。
@@ -59,12 +59,13 @@ int main(){
 ```
 
 首先使用进行初步的跟踪，在`fwrite`下断点。看到程序首先断在`_IO_fwrite`函数中，在开始调试之前，仍然是先把传入的IO FILE `fp`值看一看：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-05-29-IO_FILE_fwrite_analysis/1557453529895.png)
+![Alt text](1557453529895.png)
 以及此时的vtable中的内容：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-05-29-IO_FILE_fwrite_analysis/1557453596738.png)
-从图里也看到由于刚经过`fopen`初始化，输入输出缓冲区没有建立，此时的所有指针都为空。
+![Alt text](1557453596738.png)
+**从图里也看到由于刚经过`fopen`初始化，输入输出缓冲区没有建立，此时的所有指针都为空。**
 
 `_IO_fwrite`函数在文件`/libio/iofwrite.c`中：
+
 ```c
 _IO_size_t
 _IO_fwrite (const void *buf, _IO_size_t size, _IO_size_t count, _IO_FILE *fp)
@@ -78,7 +79,7 @@ _IO_fwrite (const void *buf, _IO_size_t size, _IO_size_t count, _IO_FILE *fp)
 libc_hidden_def (_IO_fwrite)
 ```
 没有做过多的操作就调用了`_IO_sputn`函数，该函数是`vtable`中的`__xsputn`
-（`_IO_new_file_xsputn`）在文件/libio/fileops.c中，这里就不一次性把函数的所有源码都贴在这里，而是按部分贴在下面每个部分的开始的地方，不然感觉有些冗余。
+（`_IO_new_file_xsputn`）在文件`/libio/fileops.c`中，这里就不一次性把函数的所有源码都贴在这里，而是按部分贴在下面每个部分的开始的地方，不然感觉有些冗余。
 
 如流程所示，源码分析分四个部分进行，与流程相对应，其中下面每部分刚开始的代码都是`_IO_new_file_xsputn`函数中的源码。
 
@@ -130,7 +131,7 @@ _IO_new_file_xsputn (_IO_FILE *f, const void *data, _IO_size_t n)
       block_size = f->_IO_buf_end - f->_IO_buf_base;
       do_write = to_do - (block_size >= 128 ? to_do % block_size : 0);
 ```
-经过了上一步骤后，如果还有目标输出数据，表明输出缓冲区未建立或输出缓冲区已经满了，此时调用`_IO_OVERFLOW`函数，该函数功能主要是实现刷新输出缓冲区或建立缓冲区的功能，该函数是vtable函数中的`__overflow`（`_IO_new_file_overflow`），文件在`/libio/fileops.c`中：
+经过了上一步骤后，如果还有目标输出数据，表明输出缓冲区未建立或输出缓冲区已经满了，此时调用`_IO_OVERFLOW`函数，该函数功能主要是实现刷新输出缓冲区或建立缓冲区的功能，该函数是`vtable`函数中的`__overflow`（`_IO_new_file_overflow`），文件在`/libio/fileops.c`中：
 ```c
 int
 _IO_new_file_overflow (_IO_FILE *f, int ch)
@@ -237,7 +238,7 @@ new_do_write (_IO_FILE *fp, const char *data, _IO_size_t to_do)
 ```
 终于到了调用`_IO_SYSWRITE`的地方，进行一个判断，判断`fp->_IO_read_end`是否等于`fp->_IO_write_base`，如果不等的话，调用`_IO_SYSSEEK`去调整文件偏移，这个函数就不跟进去了，正常执行流程不会过去这里。
 
-接着就调用`_IO_SYSWRITE`函数，该函数是vtable中的`__write`（`_IO_new_file_write`）函数，也是最终执行系统调用的地方，跟进去看，文件在`/libio/fileops.c`中：
+接着就调用`_IO_SYSWRITE`函数，该函数是`vtable`中的`__write`（`_IO_new_file_write`）函数，也是最终执行系统调用的地方，跟进去看，文件在`/libio/fileops.c`中：
 ```
 _IO_ssize_t
 _IO_new_file_write (_IO_FILE *f, const void *data, _IO_ssize_t n)
@@ -335,7 +336,7 @@ libc_hidden_def (_IO_default_xsputn)
 可以看到函数最主要的作用就是将剩余的目标输出数据拷贝到输出缓冲区里。为了性能优化，当长度大于20时，使用memcpy拷贝，当长度小于20时，使用for循环赋值拷贝。如果输出缓冲区为空，则调用`_IO_OVERFLOW`进行输出。
 
 根据源码我们也知道，demo程序中，最终会进入到`_IO_default_xsputn`中，并且把数据拷贝至输出缓冲区里，执行完成后，看到IO 结构体的数据如下：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-05-29-IO_FILE_fwrite_analysis/1557472135424.png)
+![Alt text](1557472135424.png)
 
 可以看到此时的`_IO_write_base`为`0xe13250`，而`_IO_write_ptr `为`0xe132b0`，大小正好是0xb0 。
 
@@ -344,7 +345,7 @@ libc_hidden_def (_IO_default_xsputn)
 
 ## 其他输出函数
 
-`fwrite`分析完了，知道它最主要的就是通过vtable函数里面的`_IO_new_file_xsputn`实现功能，且最终的建立以及刷新输出缓冲区是在`_IO_new_file_overflow`函数里面，最终执行系统调用write对数据进行输出是在`new_do_write`函数中。
+`fwrite`分析完了，知道它最主要的就是通过`vtable`函数里面的`_IO_new_file_xsputn`实现功能，且最终的建立以及刷新输出缓冲区是在`_IO_new_file_overflow`函数里面，最终执行系统调用write对数据进行输出是在`new_do_write`函数中。
 
 下面来看一下其他输出函数的栈回溯的情况，应该也都差不多，对于下面的函数，断点下在`write`函数，然后查看栈回溯。
 
@@ -386,10 +387,6 @@ __libc_start_main
       return EOF;
     }
 ```
-
-文章首发于[跳跳糖](https://www.tttang.com/archive/1279/)社区
-
-
 
 
 

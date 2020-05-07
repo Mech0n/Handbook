@@ -1,11 +1,3 @@
----
-layout: post
-title:  "IO FILE 之劫持vtable及FSOP"
-date:   2019-07-04 08:00:00
-categories: ctf
-permalink: /archivers/IO_FILE_vtable_hajack_and_fsop
----
-
 **欢迎关注公众号[平凡路上](https://mp.weixin.qq.com/s/TR-JuE2nl3W7ZmufAfpBZA)，平凡路上是一个致力于二进制漏洞分析与利用经验交流的公众号。**
 
 
@@ -22,12 +14,13 @@ permalink: /archivers/IO_FILE_vtable_hajack_and_fsop
 
 ## vtable劫持
 
-本文是基于libc 2.23及之前的libc上可实施的，libc2.24之后加入了vtable check机制，无法再构造vtable。
+**本文是基于libc 2.23及之前的libc上可实施的，**libc2.24之后加入了vtable check机制，无法再构造vtable。
 
 vtable是`_IO_FILE_plus`结构体里的一个字段，是一个函数表指针，里面存储着许多和IO相关的函数。
 
 ### 劫持原理
 `_IO_FILE_plus`结构体的定义为：
+
 ```c
 struct _IO_FILE_plus
 {
@@ -72,9 +65,9 @@ struct _IO_jump_t
 
 给出`stdin`的IO FILE结构体和它的虚表的值，更直观的看下，首先是`stdin`的结构体：
 
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-07-04-IO_FILE_vtable_hajack_and_fsop/1557888334949.png)
+![Alt text](1557888334949.png)
 可以看到此时的函数表的值是 `0x7fe23cc576e0 <__GI__IO_file_jumps>`，查看它的函数：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-07-04-IO_FILE_vtable_hajack_and_fsop/1557888443236.png)
+![Alt text](1557888443236.png)
 
 vtable劫持的原理是：如果能够控制FILE结构体，实现对vtable指针的修改，使得vtable指向可控的内存，在该内存中构造好vtable，再通过调用相应IO函数，触发vtable函数的调用，即可劫持程序执行流。
 
@@ -154,12 +147,12 @@ _IO_list_all = fp;
 从代码中也可以看出来链表是通过FILE结构体的`_chain`字段来进行链接的。
 
 正常的进行中存在stderr、sdout以及stdin三个IO FILE，此时`_IO_list_all`如下：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-07-04-IO_FILE_vtable_hajack_and_fsop/1557890525805.png)
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-07-04-IO_FILE_vtable_hajack_and_fsop/1557890600282.png)
+![Alt text](1557890525805.png)
+![Alt text](1557890600282.png)
 ![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-07-04-IO_FILE_vtable_hajack_and_fsop/1557890681756.png)
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-07-04-IO_FILE_vtable_hajack_and_fsop/1557890712256.png)
+![Alt text](1557890712256.png)
 形成的链表如下图所示：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-07-04-IO_FILE_vtable_hajack_and_fsop/1557891223351.png)
+![Alt text](1557891223351.png)
 
 看到链表的操作，应该就大致猜到了FSOP的主要原理了。即通过伪造`_IO_list_all`中的节点来实现对FILE链表的控制以实现利用目的。通常来说一般是直接利用任意写的漏洞修改`_IO_list_all`直接指向可控的地址。
 
@@ -246,6 +239,9 @@ _start ()
             > fp->_wide_data->_IO_write_base))
 ```
 
+#### 一个FSOP的流程图
+
+![](./FSOP.png)
 
 ### 示例--house of orange
 
@@ -258,7 +254,7 @@ FSOP的利用示例，最经典的莫过于`house of orange`攻击方法。下�
 在创建函数中，堆块被`malloc`出来后会打印堆的地址，可以使用该函数来泄露堆地址；漏洞在编辑函数中，编辑函数可以输入任意长的字符，因此可以造成堆溢出。
 
 首先要解决如何实现地址泄露，正常来说通过创建函数可以得到堆地址，但是如何得到libc的地址？答案是可以通过申请大的堆块，申请堆块很大时，mmap出来的内存堆块会紧贴着libc，可通过偏移得到libc地址。从下图中可以看到，当申请堆块大小为0x200000时，申请出来的堆块紧贴libc，可通过堆块地址得到libc基址。
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-07-04-IO_FILE_vtable_hajack_and_fsop/1557903848690.png)
+![Alt text](1557903848690.png)
 
 如何得到unsorted bin？想要利用unsorted bin attack实现`_IO_list_all`的改写，那么就需要有unsorted bin才行，只有一个堆块，如何得到unsorted bin？答案是利用top chunk不足时堆的分配的机制，当top chunk不足以分配，系统会分配新的top chunk并将之前的chunk 使用free函数释放，此时会将堆块释放至unsorted bin中。我们可以利用覆盖，伪造top chunk的size，释放的堆块需满足下述条件：
 ```c
@@ -275,20 +271,20 @@ assert ((old_top == initial_top (av) && old_size == 0) ||
 最终利用unsorted bin attack，将`_IO_list_all`指向`main_arena`中`unsorted_bins`数组的位置。
 
 此时的`_IO_list_all`由于指向的时`main arena`中的地址，并不是完全可控的。
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-07-04-IO_FILE_vtable_hajack_and_fsop/1557904516651.png)
+![Alt text](1557904516651.png)
 
 但是它的chain字段却是可控的，因为我们可以通过伪造一个大小为0x60的small bin释放到main arena中，从而在unsorted bin attack后，该字段刚好被当作`_chain`字段，如下图所示：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-07-04-IO_FILE_vtable_hajack_and_fsop/1557904653686.png)
+![Alt text](1557904653686.png)
 
 当调用`_IO_flush_all_lockp`时，`_IO_list_all`的头节点并不会使得我们可以控制执行流，但是当通过`fp = fp->_chain`链表，对第二个节点进行刷新缓冲区的时候，第二个节点的数据就是完全可控的。我们就可以伪造该结构体，构造好数据以及vtable，在调用vtable中的`_IO_OVERFLOW`函数时实现对执行流的劫持。
 
 写exp时，可以利用`pwn_debug`中`IO_FILE_plus`模块中的`orange_check`函数来检查当前伪造的数据是否满足house of orange的攻击，以及使用`show`函数来显示当前伪造的FILE结构体。
 
 伪造的IO FILE结构如下：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-07-04-IO_FILE_vtable_hajack_and_fsop/1557907340934.png)
+![Alt text](1557907340934.png)
 
 可以看到`_mode`为0，`_IO_write_ptr`也大于`fp->_IO_write_base`因此会触发它的`_IO_OVERFLOW`函数，它的vtable被全都伪造成了`system`的地址，如下图所示：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-07-04-IO_FILE_vtable_hajack_and_fsop/1557905353403.png)
+![Alt text](1557905353403.png)
 
 最终执行`system("bin/sh")`拿到shell。
 

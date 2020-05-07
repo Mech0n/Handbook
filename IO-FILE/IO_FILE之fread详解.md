@@ -359,7 +359,7 @@ __libc_start_main
 在结束之前我想总结下`fread`在执行系统调用read前对vtable里的哪些函数进行了调用，具体如下：
 * `_IO_sgetn`函数调用了vtable的`_IO_file_xsgetn`。
 * `_IO_doallocbuf`函数调用了vtable的`_IO_file_doallocate`以初始化输入缓冲区。
-* vtable中的`_IO_file_doallocate`调用了vtable中的`__GI__IO_file_stat`以获取文件信息。
+* `vtable`中的`_IO_file_doallocate`调用了`vtable`中的`__GI__IO_file_stat`以获取文件信息。
 * `__underflow`函数调用了vtable中的`_IO_new_file_underflow`实现文件数据读取。
 * vtable中的`_IO_new_file_underflow`调用了vtable`__GI__IO_file_read`最终去执行系统调用read。
 

@@ -1,11 +1,3 @@
----
-layout: post
-title:  "IO FILE 之vtable劫持以及绕过"
-date:   2019-08-01 08:00:00
-categories: ctf
-permalink: /archivers/IO_FILE_vtable_check_and_bypass
----
-
 **欢迎关注公众号[平凡路上](https://mp.weixin.qq.com/s/TR-JuE2nl3W7ZmufAfpBZA)，平凡路上是一个致力于二进制漏洞分析与利用经验交流的公众号。**
 
 
@@ -25,7 +17,7 @@ permalink: /archivers/IO_FILE_vtable_check_and_bypass
 glibc 2.24引入了`vtable check`，先体验一下它的检查，使用上篇文章中的东华杯的pwn450的exp，但将glibc改成2.24。（使用[pwn_debug](https://github.com/ray-cp/pwn_debug)的话，将exp里面的`debug('2.23')`改成`debug('2.24')`就可以了，或者使用local模式）。
 
 在2.24的glibc中直接运行exp，可以看到报了如下的错误：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-08-01-IO_FILE_vtable_check_and_bypass/1557977731558.png)
+![Alt text](1557977731558.png)
 可以看到第一句`memory corruption`的错误在2.23版本也是有的，第二句的错误`Fatal error: glibc detected an invalid stdio handle`是新出现的，看起来似乎是对IO的句柄进行了检测导致错误。
 
 glibc2.24的源码中搜索该字符串，定位在`_IO_vtable_check`函数中。根据函数名猜测应该是对vtable进行了检查，之前exp中是修改vtable指向了堆，可能是导致检查不过的原因。
@@ -63,8 +55,9 @@ IO_validate_vtable (const struct _IO_jump_t *vtable)
 }
 ```
 可以看到glibc中是有一段完整的内存存放着各个vtable，其中`__start___libc_IO_vtables`指向第一个vtable地址`_IO_helper_jumps`，而`__stop___libc_IO_vtables`指向最后一个vtable`_IO_str_chk_jumps`结束的地址：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-08-01-IO_FILE_vtable_check_and_bypass/1557979229529.png)
+![Alt text](1557979229529.png)
 往常覆盖vtable到堆栈上的方式无法绕过此检查，会进入到`_IO_vtable_check`检查中，这就是开始报错的最终输出错误语句的函数了，跟进去，文件在`/libio/vtables.c`中：
+
 ```c
 void attribute_hidden
 _IO_vtable_check (void)
@@ -138,8 +131,9 @@ vtable check的机制已经搞清楚了，该如何绕过呢？
 如何利用`_IO_str_jumps`或`_IO_wstr_jumps`完成攻击？在vtable的check机制出现后，大佬们发现了vtable数组中存在`_IO_str_jumps`以及`_IO_wstr_jumps`两个vtable，`_IO_wstr_jumps`与`_IO_str_jumps`功能基本一致，只是`_IO_wstr_jumps`是处理wchar的，因此这里以`_IO_str_jumps`为例进行说明，后者利用方法完全相同。
 
 `_IO_str_jumps`的函数表如下
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-08-01-IO_FILE_vtable_check_and_bypass/1557990704013.png)
+![Alt text](1557990704013.png)
 函数表中存在两个函数`_IO_str_overflow`以及`_IO_str_finish`，其中`_IO_str_finish`源代码如下，在文件`/libio/strops.c`中：
+
 ```c
 void
 _IO_str_finish (_IO_FILE *fp, int dummy)
@@ -179,16 +173,16 @@ _IO_str_finish (_IO_FILE *fp, int dummy)
 但是格式化字符串漏洞使用`__printf_chk`，该函数限制了格式化字符串在使用`%a$p`时需要同时使用`%1$p`至`%a$p`才可以，并且禁用了`%n`。因此只能使用漏洞来泄露地址。
 
 堆溢出利用的方法与上篇的东华杯pwn450的用法基本一致，覆盖`top chunk`的`size`，使得系统调用`sysmalloc`将top chunk放到unsorted bin里，然后利用`unsorted bin attack`改写`_IO_list_all`，指向伪造好的IO 结构体，vtable使用的地址是`_IO_str_jumps-8`，最后构造出来的IO结构体数据如下：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-08-01-IO_FILE_vtable_check_and_bypass/1557994473392.png)
+![Alt text](1557994473392.png)
 
 其中`fp->_mode`为0且`fp->_IO_write_ptr>_fp->_IO_write_base`，通过了`house of orange`的检查，可以进入到`_IO_OVERFLOW`的调用；同时vtable表指向`_IO_str_jumps-8`在vtable段中，也可绕过vtable的check机制；最后`fp->_flags`为0，`fp->_IO_buf_base`不为空，且指向`/bin/sh`字符串地址，可以顺利进入到`(fp->_s._free_buffer) (fp->_IO_buf_base)`的调用。在exp中可以使用[pwn_debug](https://github.com/ray-cp/pwn_debug)`IO_FILE_plus`模块的`str_finish_check`函数来检查所构造的字段是否能通过检查。
 
 vtable表指针如下，可以看到当前的`__overflow`函数确实为`_IO_str_finish`：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-08-01-IO_FILE_vtable_check_and_bypass/1557994654109.png)
+![Alt text](1557994654109.png)
 
 最后再看跳转的目标地址，确实为`system`函数且参数`_IO_buf_base`为`/bin/sh`的地址，因此执行`system("/bin/sh")`，成功拿到shell。
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-08-01-IO_FILE_vtable_check_and_bypass/1557994758008.png)
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-08-01-IO_FILE_vtable_check_and_bypass/1557995128421.png)
+![Alt text](1557994758008.png)
+![Alt text](1557995128421.png)
 
 当然这题也可以用fastbin attack做，因为top chunksize不够的时候是使用`free`函数来释放的，因此也会放到fastbin中去。
 
@@ -219,11 +213,11 @@ delete(C) #此时C将被释放至
 
 
 最后伪造`_IO_list_all`结构如下，`_IO_list_all`指向`unsorted bin`的指针的位置：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-08-01-IO_FILE_vtable_check_and_bypass/1558006126619.png)
+![Alt text](1558006126619.png)
 `_IO_list_all->_chain`指向`unsorted bin+0x68`的位置即smallbin size为0x60的位置：
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-08-01-IO_FILE_vtable_check_and_bypass/1558006168735.png)
+![Alt text](1558006168735.png)
 `_IO_list_all->_chain->_chain`指向`unsorted bin+0xb8`的位置，即smallbin size为0xb0的位置，此时由于存在我们已经释放的堆的地址，因此它指向了我们伪造的结构。
-![Alt text](https://raw.githubusercontent.com/ray-cp/ray-cp.github.io/master/_img/2019-08-01-IO_FILE_vtable_check_and_bypass/1558006329858.png)
+![Alt text](1558006329858.png)
 
 堆内容的构造则和上一题babyprintf没有区别，甚至可以使用同一个模版，不再细说。覆盖vtalbe为`_IO_str_jumps-8`，绕过vtable的check，同时设置好IO FILE的字段绕过相应检查，最终进入到`_IO_flush_all_lockp`触发FSOP，经过两次`_chain`的索引就会执行`system("/bin/sh")`。
 
