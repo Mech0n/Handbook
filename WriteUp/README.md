@@ -39,9 +39,26 @@
 
 | 题目                                                   | 补偿                     |
 | ------------------------------------------------------ | ------------------------ |
-| [HFCTF-SecureBox](./HCTF/SecureBox/HFCTF-SecureBox.md) | `malloc(0)`|`GLIBC 2.30` |
-| DE1CTF-weapon                                          | `IO_FILE`                |
+| [HFCTF-SecureBox](./HCTF/SecureBox/HFCTF-SecureBox.md) | `malloc(0)`|
+| DE1CTF-weapon                                          | `IO_FILE`中的`_IO_file_jumps`->`vtable` |
 | DE1CTF-a+b                                             |                          |
 | 36D杯                                                  | 待比赛结束补充。         |
 
 DE1CTF2020题目实在不会，之后会补充相关知识复现。已知的有C++pwn和MIPS pwn
+
+#### 【2020-05-02->2020-05-10】
+
+| 题目                                                         | 补偿          |
+| ------------------------------------------------------------ | ------------- |
+| [HCTF2018-the_end](https://ctf-wiki.github.io/ctf-wiki/pwn/linux/io_file/fake-vtable-exploit-zh/#2018-hctf-the_end) | 伪造 `vtable` |
+
+还有SharkyCTF、网鼎杯
+
+#### 【2020-05-11->2020-05-18】
+
+| 题目                                         | 补偿    |
+| -------------------------------------------- | ------- |
+| [wdb2020-boom1](./网鼎杯2020/boom1/boom1.md) | c解释器 |
+| [wdb2020-boom2](./网鼎杯2020/boom2/boom2.md) | Vm pwn  |
+| sharkeyCTF-CaptainHook                       | FMT     |
+
