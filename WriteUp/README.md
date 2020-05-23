@@ -62,3 +62,12 @@ DE1CTF2020题目实在不会，之后会补充相关知识复现。已知的有C
 | [wdb2020-boom2](./网鼎杯2020/boom2/boom2.md) | Vm pwn  |
 | sharkeyCTF-CaptainHook                       | FMT     |
 
+#### 【2020-05-19->2020-05-23】
+
+| 题目                                                         | 补偿                 |
+| ------------------------------------------------------------ | -------------------- |
+| [Memory_Monster_I](./DASCTF/Memory_Monster_I/Memory_Monster_I_II_III.md) | 劫持`stack_chk_fail` |
+| [Secret2](./DASCTF/secret2/Secret2.md)                       | `ulimit -a`          |
+
+参加了安恒五月赛、写了一下HackpackCTF的题目。
+
