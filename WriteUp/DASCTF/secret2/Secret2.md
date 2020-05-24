@@ -115,7 +115,7 @@ int __fastcall stop(const void *name)
 
 这里有一个栈溢出可以利用。通过在`name`中写入ROP链，来达到获取`flag`的目的。
 
-但是注意一点，这个时候`stdin`已经关闭，不会输出东西了。所以我们不能通过`system('/bin/sh')`来拿`shell`。
+但是注意一点，这个时候`stdin`已经关闭，我们不能输入东西了。所以我们不能通过`system('/bin/sh')`来拿`shell`。
 
 可以构造`open("./flag", 0); read(0, addr, 0x100); puts(addr)`来得到`flag`。
 
