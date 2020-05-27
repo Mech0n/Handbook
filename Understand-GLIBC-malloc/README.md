@@ -9,6 +9,11 @@
 - [`malloc(size_t n)`](./2.23-malloc().md)
 - [`free(void* ptr)`](./2.23-free().md)
 
+##### 【GLIBC-2.27】
+
+- [`malloc()`](./2.27-malloc().md)
+- [`free()`](./2.27-free().md)
+
 待补充ing
 
 ##### Reference
