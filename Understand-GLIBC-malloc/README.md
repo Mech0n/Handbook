@@ -14,6 +14,10 @@
 - [`malloc()`](./2.27-malloc().md)
 - [`free()`](./2.27-free().md)
 
+##### 【GLIBC-2.29】
+
+- [[EX]Glibc-2.29新增的防护机制](./[EX]Glibc-2.29新增的防护机制.md)
+
 待补充ing
 
 ##### Reference
@@ -21,4 +25,6 @@
 [Introspelliam](https://introspelliam.github.io/categories/pwn/)
 
 [Understanding glibc malloc](https://sploitfun.wordpress.com/2015/02/10/understanding-glibc-malloc/)
+
+[Glibc-2.29 新增的防护机制](http://blog.eonew.cn/archives/1167)
 
