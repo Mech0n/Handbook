@@ -78,3 +78,13 @@ DE1CTF2020题目实在不会，之后会补充相关知识复现。已知的有C
 | [kidding](./pwnable.tw-kidding.md) | 反弹shell              |
 | happyending                        | GLIBC-2.29 off_by_null |
 
+#### 【2020-06-01->2020-06-06】
+
+| 题目                                                  | 补偿                       |
+| ----------------------------------------------------- | -------------------------- |
+| [fakev](./M0lencon-fakev/m0lencon-fakev&&fclose().md) | `IO_FILE` | `GLIBC2.27`    |
+| blacky_echo                                           | FMT覆盖大地址              |
+| knife                                                 | `socket`\|重定向文件描述符 |
+
+复现了m0lecon2020的pwn（这两周准备考试，摸鱼了。
+
