@@ -586,7 +586,7 @@ int edit()
 
 ##### 2) Leak Heap && Libc
 
-当我们在Unsorted Bin中切割`Top chunk`时，剩余的`chunk`由于仍然大于Small Bin的范围，被放到了LargeBin。所以可以通过这个Chunk来泄漏libc和heap。
+当我们在Unsorted Bin中切割`Top chunk`时，剩余的`chunk`由于仍然大于Small Bin的范围，被放到了LargeBin。所以可以通过这个Chunk来泄漏libc和heap。**（补充：这里忽略了一点，这个时候由于Unsorted Bin 中只有Old Top Chunk，而且我们申请的chunk大小和它不同，所以在切割之前，它会首先进入Large Bin，所以切割出来的Chunk也是拥有libc和heap地址的。）**
 
 ##### 3) Abort routine
 
