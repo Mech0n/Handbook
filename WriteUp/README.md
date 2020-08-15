@@ -90,8 +90,9 @@ DE1CTF2020题目实在不会，之后会补充相关知识复现。已知的有C
 
 #### 【2020-08】
 
-| 题目                                                         | 补偿            |
-| ------------------------------------------------------------ | --------------- |
-| [Geekpwn-babypwn](https://gist.github.com/Mech0n/2fb8be1392cb6312cbf00d5791e979cc) | House of Orange |
-| [HITCON-House_of_Orange](https://github.com/Mech0n/Handbook/tree/master/how2heap/house_of_orange) | House of Orange |
+| 题目                                                         | 补偿                   |
+| ------------------------------------------------------------ | ---------------------- |
+| [Geekpwn-babypwn](https://gist.github.com/Mech0n/2fb8be1392cb6312cbf00d5791e979cc) | House of Orange        |
+| [HITCON-House_of_Orange](https://github.com/Mech0n/Handbook/tree/master/how2heap/house_of_orange) | House of Orange        |
+| [CISCN-Final-2](https://gist.github.com/Mech0n/66df30aa03074bbc94cb3ce7779f2a19) | IO_FILE && Double Free |
 
