@@ -1,3 +1,9 @@
+---
+title: Computer-Networking-Chapter-6
+date: 2020-09-23 20:28:42
+tags: ComputerNetwork
+---
+
 # Chapter 6
 
 #### R1
