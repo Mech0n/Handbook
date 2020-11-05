@@ -1,1 +1,5 @@
 .DS_Store
+generate_sidebar.py
+_sidebar.md
+home.md
+index.html
