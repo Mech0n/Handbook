@@ -98,3 +98,8 @@ DE1CTF2020题目实在不会，之后会补充相关知识复现。已知的有C
 | [ech0_from_your_heart](https://gist.github.com/Mech0n/f955999713df5bd147154dbf7ad14338) | House of Orange && glibc2.24     |
 | [sctf2020-coolcode](https://gist.github.com/Mech0n/5d7d4c966835ca2971e25da74408cecd) | Shellcode && retfq 禁用Open的ORW |
 
+#### 【2020-08-2020-11】
+
+以后的WP偷懒写到gist了。
+
+[Mech0n's gist](https://gist.github.com/Mech0n)
