@@ -294,3 +294,13 @@ int main()
 }
 ```
 
+### Reference
+
+[linux kernel 爬坑记录](https://s3cunda.github.io/%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/2018/09/21/linux-kernel-%E7%88%AC%E5%9D%91%E8%AE%B0%E5%BD%95.html)
+
+[Linux Kernel Pwn ABC(Ⅰ)](https://m4x.fun/post/linux-kernel-pwn-abc-1/#%E5%86%85%E6%A0%B8%E6%80%81%E5%87%BD%E6%95%B0)
+
+[入门学习linux内核提权](https://xz.aliyun.com/t/2054#toc-2)
+
+[Linux kernel pwn：ROP & ret2usr](https://mp.weixin.qq.com/s/mx4idyRgfDHQQmbo3RPePg)
+
