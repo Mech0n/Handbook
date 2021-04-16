@@ -31,6 +31,8 @@
 
 - [HWS babycall](https://gist.github.com/Mech0n/71d6135ae3378a3af73adecba63a5295)
 
+- [Midnight Sun CTF 2021 brohammer](https://github.com/Mech0n/Handbook/tree/master/WriteUp/brohammer/\[Midnight\ Sun\ CTF\ 2021\]\ Linux\ Kernel\ 本地漏洞复现.md)
+
 #### Other WriteUP
 
 - [WriteUp](https://github.com/Mech0n/Handbook/tree/master/WriteUp)
