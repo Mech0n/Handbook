@@ -39,3 +39,7 @@
 
 - [Gist](https://gist.github.com/Mech0n)
 
+### Tools Usage
+
+- [pwntools.fmtstr_payload](https://github.com/Mech0n/Handbook/tree/master/tools_usage/FMT利用_Python3-Exp.md)
+- [pwntools-Python3](https://github.com/Mech0n/Handbook/tree/master/tools_usage/FMT利用_Python3-Exp.md)
